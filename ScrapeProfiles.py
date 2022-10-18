@@ -42,7 +42,7 @@ driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), opti
 config = dotenv_values("data.env")
 driver.maximize_window()
 
-
+#div[role="listbox"]>div>div
 
 def login(username1, password1):
 
@@ -68,12 +68,27 @@ def check_word(string):
         if not config[string] :
                 return 1
         return 0
-def filter_by_location():
+def filter_by_location(loc):
     try :
         location = WebDriverWait(driver, float(config["TIMETOWAIT"])).until(
             EC.presence_of_element_located((By.XPATH, '//button[text()="Locations"]')))
         location.click()
-    except NoSuchElementException:
+        time.sleep(float(config["TIMETOWAIT"]))
+        input_location = WebDriverWait(driver, float(config["TIMETOWAIT"])).until(
+            EC.presence_of_element_located((By.CSS_SELECTOR, 'input[aria-label="Add a location"]')))
+        input_location.click()
+        input_location.clear()
+        input_location.send_keys(loc)
+        time.sleep(float(config["TIMETOWAIT"]))
+        exact_location = WebDriverWait(driver, float(config["TIMETOWAIT"])).until(
+            EC.presence_of_element_located((By.CSS_SELECTOR, 'div[role="listbox"]>div>div')))
+        exact_location.click()
+        time.sleep(float(config["TIMETOWAIT"]))
+        show_results = WebDriverWait(driver, float(config["TIMETOWAIT"])).until(
+            EC.presence_of_element_located((By.XPATH, '//*[@id="ember1959"]')))
+        show_results.click()
+    except (NoSuchElementException, Exception) as err:
+        print(err)
         print("Something went wrong..")
         driver.quit()
 
@@ -93,6 +108,10 @@ def filter_by_skill():
                 keyword += "%2C"
         driver.get("https://www.linkedin.com/search/results/people/?keywords="+keyword+"&origin=SWITCH_SEARCH_VERTICAL&sid=N8%3B")
         time.sleep(float(config["TIMETOWAIT"]))
+        for location in config["LOCATION"].split(','):
+            filter_by_location(location)
+        time.sleep(float(config["TIMETOWAIT"]))
+
     except Exception as err:
         print(err)
         print("Search input not found please increase TIMETOWAIT")
